@@ -22,4 +22,19 @@ if (!$result) {
     echo "Server response: $response\n";
 }
 
+while (true) {
+
+    echo "Enter command: ";
+    $command = trim(fgets(STDIN));
+
+    if ($command === "exit") {
+        socket_write($socket, "exit");
+        break;
+    }
+
+    sendCommand($socket, $command);
+}
+
+socket_close($socket);
+echo "Disconnected from the server.\n"; 
 
