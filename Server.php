@@ -119,3 +119,13 @@ function writeToFile($fileName, $content, $socket) {
     file_put_contents($filePath, $content, FILE_APPEND);
     socket_write($socket, "File content updated!\n");
 }
+
+function listFiles($socket) {
+    $files = scandir("./files");
+    if ($files === false) {
+        socket_write($socket, "Cannot access files on server\n");
+        return;
+    }
+    $fileList = implode("\n", array_diff($files, ['.', '..']));
+    socket_write($socket, $fileList ? $fileList : "No files exist on the server\n");
+}
