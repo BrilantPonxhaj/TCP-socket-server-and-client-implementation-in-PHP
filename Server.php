@@ -129,3 +129,13 @@ function listFiles($socket) {
     $fileList = implode("\n", array_diff($files, ['.', '..']));
     socket_write($socket, $fileList ? $fileList : "No files exist on the server\n");
 }
+
+function showHelp($socket) {
+    $helpMessage = "\n" .
+        "Type /read [file name.txt] -> To read from a file!\n" .
+        "Type /write [file name.txt] [content] -> To write in a file!\n" .
+        "Type /exec [file name.txt] [action] -> (Actions: new - create new file, del - delete file, run - open a file)!\n" .
+        "Type exit to close the connection with server!\n" .
+        "Type /list to list the files on server!\n";
+    socket_write($socket, $helpMessage);
+}
