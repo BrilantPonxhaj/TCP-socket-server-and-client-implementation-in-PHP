@@ -29,6 +29,9 @@ $knownClients = [
            'id' => 4,
            'ip' => '',
            'name' => 'Çlirimtar',
+           'readPermission' => true,
+           'writePermission' => true,
+           'executePermission' => false,
            
        ],
    ];
