@@ -35,3 +35,16 @@ $knownClients = [
            
        ],
    ];
+
+    function getClientName($ip) {
+        global $knownClients;
+
+        foreach ($knownClients as $client) {
+            if ($client['ip'] === $ip) {
+                return $client['name'];
+            }
+        }
+
+        // Return IP if no matching client is found
+        return $ip;
+    } 
