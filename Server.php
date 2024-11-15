@@ -99,3 +99,23 @@ function checkPermission($ip, $action) {
     }
     return false;
 }
+
+function readFileContent($fileName, $socket) {
+    $filePath = "./files/$fileName";
+    if (!file_exists($filePath)) {
+        socket_write($socket, "File not found\n");
+        return;
+    }
+    $content = file_get_contents($filePath);
+    socket_write($socket, $content);
+}
+
+function writeToFile($fileName, $content, $socket) {
+    $filePath = "./files/$fileName";
+    if (!file_exists($filePath)) {
+        socket_write($socket, "File not found\n");
+        return;
+    }
+    file_put_contents($filePath, $content, FILE_APPEND);
+    socket_write($socket, "File content updated!\n");
+}
