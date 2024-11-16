@@ -139,3 +139,37 @@ function showHelp($socket) {
         "Type /list to list the files on server!\n";
     socket_write($socket, $helpMessage);
 }
+
+function handleExec($fileName, $action, $socket) {
+    $filePath = "./files/$fileName";
+
+
+    switch ($action) {
+        case "new":
+
+            if (touch($filePath)) {
+                socket_write($socket, "File $fileName created!\n");
+            } else {
+                socket_write($socket, "Error creating file $fileName\n");
+            }
+            break;
+        case "del":
+            if (unlink($filePath)) {
+                socket_write($socket, "File $fileName has been deleted\n");
+            } else {
+                socket_write($socket, "Error deleting file $fileName\n");
+            }
+            break;
+        case "run":
+            exec("php $filePath", $output, $return_var);
+            if ($return_var === 0) {
+                socket_write($socket, implode("\n", $output) . "\nScript has run successfully\n");
+            } else {
+                socket_write($socket, "Error executing script\n");
+            }
+            break;
+        default:
+            socket_write($socket, "Invalid command! Type /help to see server commands!\n");
+            break;
+    }
+}
