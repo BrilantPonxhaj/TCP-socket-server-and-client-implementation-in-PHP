@@ -1,20 +1,15 @@
 <?php
-
+include 'ClientsWithPermissions.php';
 // Server IP and port
-$host = '172.16.105.53';
+$host = '192.168.1.13';
 $port = 8080;
 
 // Create socket
-$socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+$socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP) or die("Could not create socket!");
 socket_bind($socket, $host, $port);
 socket_listen($socket);
 
 echo "Server is listening on IP $host and port $port\n";
-
-$knownClients = [
-    ['ip' => '172.16.105.53', 'writePermission' => true, 'executePermission' => true],
-    ['ip' => '192.168.100.140', 'writePermission' => false, 'executePermission' => true, 'readPermission' => false],
-];
 
 $blockList = ['172.20.10.10'];
 
@@ -30,7 +25,8 @@ while (true) {
 
     echo "Client connected: $clientIP\n";
     $alias = resolveClient($clientIP);
-
+    $clientName = getClientName($clientIP);
+    
     while ($data = socket_read($clientSocket, 1024)) {
         $data = trim($data);
         echo "Received data from $alias: $data\n";
@@ -69,6 +65,8 @@ while (true) {
             handleExec($fileName, $action, $clientSocket);
         } elseif ($data == "/help") {
             showHelp($clientSocket);
+        } else if (str_starts_with($data, "/send")) {
+            sendMessage($data, $clientSocket, $clientName, $clientIP, $alias);
         } else {
             socket_write($clientSocket, "Unknown command\n");
         }
@@ -173,3 +171,16 @@ function handleExec($fileName, $action, $socket) {
             break;
     }
 }
+
+function sendMessage($data, $clientSocket, $clientName, $clientIP, $alias) {
+    $message = trim(substr($data, strlen("/send")));
+    $formattedMessage = "$clientName: $message";
+
+    if (socket_write($clientSocket, $formattedMessage, strlen($formattedMessage)) === false) {
+        echo "Failed to send message to client $clientIP\n";
+    } else {
+        echo "$formattedMessage, IP: $alias\n";
+    }
+}
+
+?>
