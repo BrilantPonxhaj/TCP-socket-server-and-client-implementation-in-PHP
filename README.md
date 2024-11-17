@@ -36,18 +36,32 @@ Projekti përmban komponentët e mëposhtëm:
 ### Server
 Në terminalin e serverit:
 ```
-Serveri është duke dëgjuar për lidhje...
-Klienti u lidh nga: 127.0.0.1
-Mesazhi i pranuar: Përshëndetje nga klienti!
-Mesazhi i kthyer: Përshëndetje nga serveri!
+Server is listening on IP 192.168.100.161 and port 8081
+Client connected: 192.168.100.102
+You are blocked
+Press [ENTER] to close the connection!
+Client 192.168.100.102 disconnected
+Received data from 192.168.100.102: /read file.txt
+Reading content of file.txt
+File content updated!
+File file.txt created!
+File file.txt has been deleted
+file1.txt
+file2.txt
+Alice: Hello, server!
+Message received
+Unknown command
 ```
 
 ### Klienti
 Në terminalin e klientit:
 ```
-Lidhja me serverin...
-Mesazhi i dërguar: Përshëndetje nga klienti!
-Përgjigja e serverit: Përshëndetje nga serveri!
+Connected to the server at 192.168.100.161 on port 8081
+Type your command or 'exit' to close the connection.
+Enter command: status
+Server response: Server is up and running.
+Enter command: exit
+Disconnected from the server.
 ```
 
 ## Karakteristikat Kryesore
