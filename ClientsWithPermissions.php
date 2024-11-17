@@ -3,7 +3,7 @@
 $knownClients = [
        [
            'id' => 1,
-           'ip' => '192.168.100.160',
+           'ip' => '192.168.100.161',
            'name' => 'Brikenda',
            'readPermission' => true,
            'writePermission' => true,

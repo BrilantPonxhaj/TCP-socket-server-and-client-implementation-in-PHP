@@ -1,7 +1,7 @@
 <?php
 include 'ClientsWithPermissions.php';
 // Server IP and port
-$host = '192.168.100.160';
+$host = '192.168.100.161';
 $port = 8081;
 
 // Create socket
@@ -15,71 +15,108 @@ $blockList = ['172.20.10.10'];
 $clients = [];
 
 while (true) {
-    $clientSocket = socket_accept($socket);
-    socket_getpeername($clientSocket, $clientIP);
 
-    if (in_array($clientIP, $blockList)) {
-        socket_write($clientSocket, "You are blocked\n");
-        socket_close($clientSocket);
-        continue;
+    $readSockets = array_merge([$socket], $clients);
+    $writeSockets = null;
+    $exceptSockets = null;
+
+    if (socket_select($readSockets, $writeSockets, $exceptSockets, null) === false) {
+        echo "Error with socket_select\n";
+        break;
     }
 
-    echo "Client connected: $clientIP\n";
-    $alias = resolveClient($clientIP);
-    $clientName = getClientName($clientIP);
+    if (in_array($socket, $readSockets)) {
+        $clientSocket = socket_accept($socket);
+        socket_getpeername($clientSocket, $clientIP);
 
-    while ($data = socket_read($clientSocket, 1024)) {
-        $data = trim($data);
-        echo "Received data from $alias: $data\n";
-
-        if ($data == "exit") {
-            socket_write($clientSocket, "Press [ENTER] to close the connection!\n");
-            break;
-        }
-
-        if (str_starts_with($data, "/read")) {
-            if (!checkPermission($clientIP, 'readPermission')) {
-                socket_write($clientSocket, "You don't have permission to read\n");
-                continue;
-            }
-            $fileName = explode(" ", $data)[1];
-            readFileContent($fileName, $clientSocket);
-        } elseif (str_starts_with($data, "/write")) {
-            if (!checkPermission($clientIP, 'writePermission')) {
-                socket_write($clientSocket, "You don't have permission to write\n");
-                continue;
-            }
-            $parts = explode(" ", $data, 3);
-            $fileName = $parts[1];
-            $content = isset($parts[2]) ? $parts[2] : "";
-            writeToFile($fileName, $content, $clientSocket);
-        } elseif (str_starts_with($data, "/list")) {
-            listFiles($clientSocket);
-        } elseif (str_starts_with($data, "/exec")) {
-            if (!checkPermission($clientIP, 'executePermission')) {
-                socket_write($clientSocket, "You don't have permission to execute\n");
-                continue;
-            }
-            $parts = explode(" ", $data, 3);
-            $fileName = $parts[1];
-            $action = $parts[2] ?? null;
-            handleExec($fileName, $action, $clientSocket);
-        } elseif ($data == "/help") {
-            showHelp($clientSocket);
-        } else if (str_starts_with($data, "/send")) {
-            sendMessage($data, $clientSocket, $clientName, $clientIP, $alias);
+        if (in_array($clientIP, $blockList)) {
+            socket_write($clientSocket, "You are blocked\n");
+            socket_close($clientSocket);
         } else {
-            socket_write($clientSocket, "Unknown command\n");
+            $clients[] = $clientSocket;
+            echo "Client connected: $clientIP\n";
         }
     }
 
-    echo "Connection closed by $alias\n";
-    socket_close($clientSocket);
+    // Handle data from existing client connections
+    foreach ($clients as $key => $clientSocket) {
+        if (in_array($clientSocket, $readSockets)) {
+            $data = socket_read($clientSocket, 1024);
+            if ($data === false) {
+
+                socket_getpeername($clientSocket, $clientIP);
+                unset($clients[$key]);
+                socket_close($clientSocket);
+
+                foreach ($clients as $otherClient) {
+                    socket_write($otherClient, "$clientIP has disconnected.\n");
+                }
+
+                echo "Client $clientIP disconnected\n";
+                continue;
+            }
+
+            $data = trim($data);
+            if ($data == "exit") {
+                socket_write($clientSocket, "Press [ENTER] to close the connection!\n");
+                unset($clients[$key]);
+                socket_close($clientSocket);
+
+                foreach ($clients as $otherClient) {
+                    socket_write($otherClient, "$clientIP has disconnected.\n");
+                }
+
+                echo "Client $clientIP disconnected\n";
+                continue;
+            }
+
+            $alias = resolveClient($clientIP);
+            $clientName = getClientName($clientIP);
+
+            echo "Received data from $alias: $data\n";
+
+            if (str_starts_with($data, "/read")) {
+                if (!checkPermission($clientIP, 'readPermission')) {
+                    socket_write($clientSocket, "You don't have permission to read\n");
+                    continue;
+                }
+                $fileName = explode(" ", $data)[1];
+                readFileContent($fileName, $clientSocket);
+            } elseif (str_starts_with($data, "/write")) {
+                if (!checkPermission($clientIP, 'writePermission')) {
+                    socket_write($clientSocket, "You don't have permission to write\n");
+                    continue;
+                }
+                $parts = explode(" ", $data, 3);
+                $fileName = $parts[1];
+                $content = isset($parts[2]) ? $parts[2] : "";
+                writeToFile($fileName, $content, $clientSocket);
+            } elseif (str_starts_with($data, "/list")) {
+                listFiles($clientSocket);
+            } elseif (str_starts_with($data, "/exec")) {
+                if (!checkPermission($clientIP, 'executePermission')) {
+                    socket_write($clientSocket, "You don't have permission to execute\n");
+                    continue;
+                }
+                $parts = explode(" ", $data, 3);
+                $fileName = $parts[1];
+                $action = $parts[2] ?? null;
+                handleExec($fileName, $action, $clientSocket);
+            } elseif ($data == "/help") {
+                showHelp($clientSocket);
+            } else if (str_starts_with($data, "/send")) {
+                sendMessage($data, $clientSocket, $clientName, $clientIP, $alias);
+            } else {
+                socket_write($clientSocket, "Unknown command\n");
+            }
+        }
+    }
 }
 
 // Functions remain the same
 
-function resolveClient($ip) {
+function resolveClient($ip)
+{
     global $knownClients;
     foreach ($knownClients as $client) {
         if ($client['ip'] === $ip) {
@@ -89,7 +126,8 @@ function resolveClient($ip) {
     return "Unknown Client";
 }
 
-function checkPermission($ip, $action) {
+function checkPermission($ip, $action)
+{
     global $knownClients;
     foreach ($knownClients as $client) {
         if ($client['ip'] === $ip && !empty($client[$action])) {
@@ -99,7 +137,8 @@ function checkPermission($ip, $action) {
     return false;
 }
 
-function readFileContent($fileName, $socket) {
+function readFileContent($fileName, $socket)
+{
     $filePath = "./files/$fileName";
     if (!file_exists($filePath)) {
         socket_write($socket, "File not found\n");
@@ -109,7 +148,8 @@ function readFileContent($fileName, $socket) {
     socket_write($socket, $content);
 }
 
-function writeToFile($fileName, $content, $socket) {
+function writeToFile($fileName, $content, $socket)
+{
     $filePath = "./files/$fileName";
     if (!file_exists($filePath)) {
         socket_write($socket, "File not found\n");
@@ -119,7 +159,8 @@ function writeToFile($fileName, $content, $socket) {
     socket_write($socket, "File content updated!\n");
 }
 
-function listFiles($socket) {
+function listFiles($socket)
+{
     $files = scandir("./files");
     if ($files === false) {
         socket_write($socket, "Cannot access files on server\n");
@@ -129,7 +170,8 @@ function listFiles($socket) {
     socket_write($socket, $fileList ? $fileList : "No files exist on the server\n");
 }
 
-function showHelp($socket) {
+function showHelp($socket)
+{
     $helpMessage = "\n" .
         "Type /read [file name.txt] -> To read from a file!\n" .
         "Type /write [file name.txt] [content] -> To write in a file!\n" .
@@ -139,7 +181,8 @@ function showHelp($socket) {
     socket_write($socket, $helpMessage);
 }
 
-function handleExec($fileName, $action, $socket) {
+function handleExec($fileName, $action, $socket)
+{
     $filePath = "./files/$fileName";
 
     switch ($action) {
@@ -171,14 +214,13 @@ function handleExec($fileName, $action, $socket) {
     }
 }
 
-function sendMessage($data, $clientSocket, $clientName, $clientIP, $alias) {
+function sendMessage($data, $clientSocket, $clientName, $clientIP, $alias)
+{
     $message = trim(substr($data, strlen("/send")));
     $formattedMessage = "$clientName: $message";
+    echo "$formattedMessage, IP: $alias\n";
+    socket_write($clientSocket, "Message received\n");
 
-    if (socket_write($clientSocket, $formattedMessage, strlen($formattedMessage)) === false) {
-        echo "Failed to send message to client $clientIP\n";
-    } else {
-        echo "$formattedMessage, IP: $alias\n";
-    }
 }
+
 ?>
