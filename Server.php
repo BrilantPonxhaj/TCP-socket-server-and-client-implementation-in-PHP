@@ -179,7 +179,8 @@ function showHelp($socket)
         "Type /write [file name.txt] [content] -> To write in a file!\n" .
         "Type /exec [file name.txt] [action] -> (Actions: new - create new file, del - delete file, run - open a file)!\n" .
         "Type exit to close the connection with server!\n" .
-        "Type /list to list the files on server!\n";
+        "Type /list to list the files on server!\n" .
+        "Type /send [content] -> To send a message to the server.\n";
     socket_write($socket, $helpMessage);
 }
 
