@@ -1,7 +1,7 @@
 <?php
 include 'ClientsWithPermissions.php';
 // Server IP and port
-$host = '192.168.100.161';
+$host = '192.168.100.166';
 $port = 8081;
 
 // Create socket
@@ -70,8 +70,10 @@ while (true) {
                 continue;
             }
 
+            socket_getpeername($clientSocket, $clientIP);
             $alias = resolveClient($clientIP);
             $clientName = getClientName($clientIP);
+
 
             echo "Received data from $alias: $data\n";
 
@@ -139,7 +141,7 @@ function checkPermission($ip, $action)
 
 function readFileContent($fileName, $socket)
 {
-    $filePath = "./files/$fileName";
+    $filePath = "./Files/$fileName";
     if (!file_exists($filePath)) {
         socket_write($socket, "File not found\n");
         return;
@@ -150,7 +152,7 @@ function readFileContent($fileName, $socket)
 
 function writeToFile($fileName, $content, $socket)
 {
-    $filePath = "./files/$fileName";
+    $filePath = "./Files/$fileName";
     if (!file_exists($filePath)) {
         socket_write($socket, "File not found\n");
         return;
@@ -161,13 +163,13 @@ function writeToFile($fileName, $content, $socket)
 
 function listFiles($socket)
 {
-    $files = scandir("./files");
+    $files = scandir("./Files");
     if ($files === false) {
         socket_write($socket, "Cannot access files on server\n");
         return;
     }
     $fileList = implode("\n", array_diff($files, ['.', '..']));
-    socket_write($socket, $fileList ? $fileList : "No files exist on the server\n");
+    socket_write($socket, $fileList ?: "No files exist on the server\n");
 }
 
 function showHelp($socket)
@@ -183,7 +185,7 @@ function showHelp($socket)
 
 function handleExec($fileName, $action, $socket)
 {
-    $filePath = "./files/$fileName";
+    $filePath = "./Files/$fileName";
 
     switch ($action) {
         case "new":
@@ -198,14 +200,6 @@ function handleExec($fileName, $action, $socket)
                 socket_write($socket, "File $fileName has been deleted\n");
             } else {
                 socket_write($socket, "Error deleting file $fileName\n");
-            }
-            break;
-        case "run":
-            exec("php $filePath", $output, $return_var);
-            if ($return_var === 0) {
-                socket_write($socket, implode("\n", $output) . "\nScript has run successfully\n");
-            } else {
-                socket_write($socket, "Error executing script\n");
             }
             break;
         default:
