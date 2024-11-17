@@ -1,8 +1,8 @@
 <?php
 include 'ClientsWithPermissions.php';
 // Server IP and port
-$host = '192.168.1.13';
-$port = 8080;
+$host = '192.168.100.160';
+$port = 8081;
 
 // Create socket
 $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP) or die("Could not create socket!");
@@ -12,6 +12,7 @@ socket_listen($socket);
 echo "Server is listening on IP $host and port $port\n";
 
 $blockList = ['172.20.10.10'];
+$clients = [];
 
 while (true) {
     $clientSocket = socket_accept($socket);
@@ -26,7 +27,7 @@ while (true) {
     echo "Client connected: $clientIP\n";
     $alias = resolveClient($clientIP);
     $clientName = getClientName($clientIP);
-    
+
     while ($data = socket_read($clientSocket, 1024)) {
         $data = trim($data);
         echo "Received data from $alias: $data\n";
@@ -76,7 +77,7 @@ while (true) {
     socket_close($clientSocket);
 }
 
-// Functions
+// Functions remain the same
 
 function resolveClient($ip) {
     global $knownClients;
@@ -141,10 +142,8 @@ function showHelp($socket) {
 function handleExec($fileName, $action, $socket) {
     $filePath = "./files/$fileName";
 
-
     switch ($action) {
         case "new":
-
             if (touch($filePath)) {
                 socket_write($socket, "File $fileName created!\n");
             } else {
@@ -182,5 +181,4 @@ function sendMessage($data, $clientSocket, $clientName, $clientIP, $alias) {
         echo "$formattedMessage, IP: $alias\n";
     }
 }
-
 ?>

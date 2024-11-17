@@ -3,7 +3,7 @@
 $knownClients = [
        [
            'id' => 1,
-           'ip' => '',
+           'ip' => '192.168.100.160',
            'name' => 'Brikenda',
            'readPermission' => true,
            'writePermission' => true,
@@ -11,7 +11,7 @@ $knownClients = [
        ],
        [
            'id' => 2,
-           'ip' => '',
+           'ip' => '192.168.100.106',
            'name' => 'Brineta',
            'readPermission' => true,
            'writePermission' => true,
@@ -46,5 +46,5 @@ $knownClients = [
         }
 
         // Return IP if no matching client is found
-        return $ip;
+        return false;
     } 

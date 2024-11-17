@@ -1,8 +1,8 @@
 <?php
 
 // Server IP and port
-$host = '192.168.100.140';
-$port = 8080;
+$host = '192.168.100.160';
+$port = 8081;
 
 $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 $result = socket_connect($socket, $host, $port);
