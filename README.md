@@ -1,4 +1,4 @@
-# TCP-socket-server-and-client-implementation-in-PHP
+# Computer Networks: TCP-socket-server-and-client-implementation-in-PHP
 
 ## Përshkrimi i Projektit
 Ky projekt implementon një server dhe klient që komunikojnë përmes socket TCP duke përdorur PHP. Ai demonstron një sistem bazë për komunikim në rrjet dhe lehtëson kuptimin e funksionalitetit të sockets në PHP. 
